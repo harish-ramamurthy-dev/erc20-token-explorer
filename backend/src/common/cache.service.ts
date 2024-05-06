@@ -2,6 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { CacheKey } from './cache-key.enum';
+import { Erc20LeaderBoard } from '../token/interface/erc20-leaderboard.interface';
 
 @Injectable()
 export class CacheService {
@@ -13,26 +14,25 @@ export class CacheService {
     return this.cacheManager.get(key);
   }
 
-  async setCacheByKey<T>(key: CacheKey, value: T): Promise<T> {
+  async setLeaderboardCache(
+    key: CacheKey,
+    value: Erc20LeaderBoard,
+  ): Promise<void> {
     const currentValue = await this.getCacheByKey(key);
-    let newValue;
     if (currentValue && Array.isArray(currentValue)) {
-      if (Array.isArray(value)) {
-        newValue = await this.cacheManager.set(
-          key,
-          [...currentValue, ...value],
-          this.CACHE_TTL,
-        );
+      const cache = currentValue.find((item) => item.address === value.address);
+      if (cache) {
+        cache.netWorth = value.netWorth;
+        await this.cacheManager.set(key, currentValue, this.CACHE_TTL);
       } else {
-        newValue = await this.cacheManager.set(
+        await this.cacheManager.set(
           key,
           [...currentValue, value],
           this.CACHE_TTL,
         );
       }
     } else {
-      newValue = await this.cacheManager.set(key, value, this.CACHE_TTL);
+      await this.cacheManager.set(key, [value], this.CACHE_TTL);
     }
-    return newValue;
   }
 }

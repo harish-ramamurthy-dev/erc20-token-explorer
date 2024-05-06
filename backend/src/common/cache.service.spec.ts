@@ -3,6 +3,7 @@ import { CacheService } from './cache.service';
 import { Cache } from 'cache-manager';
 import { CacheKey } from './cache-key.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Wallet } from 'ethers';
 
 const mockCacheManager = {
   get: jest.fn(),
@@ -57,35 +58,34 @@ describe('CacheService', () => {
 
   it('should set cache with single value', async () => {
     const key = CacheKey.ERC20_LEADERBOARD;
-    const value = 'someValue';
-    const expectedNewValue = 'newValue';
+    const value = { address: Wallet.createRandom().address, netWorth: 1000.1234 };
+    const expectedNewValue = { ...value };
 
     mockCacheManager.get.mockResolvedValueOnce(null);
     mockCacheManager.set.mockResolvedValueOnce(expectedNewValue);
 
-    const result = await service.setCacheByKey(key, value);
+    await service.setLeaderboardCache(key, value);
 
-    expect(result).toEqual(expectedNewValue);
     expect(cacheManager.get).toHaveBeenCalledWith(key);
     expect(cacheManager.set).toHaveBeenCalledWith(
       key,
-      value,
+      [value],
       expect.any(Number),
     );
   });
 
   it('should set cache with array value', async () => {
     const key = CacheKey.ERC20_LEADERBOARD;
-    const value = ['someValue1', 'someValue2'];
-    const currentValue = ['existingValue1', 'existingValue2'];
-    const expectedNewValue = [...currentValue, ...value];
+    const address = Wallet.createRandom().address;
+    const value = { address, netWorth: 1000.1234 };
+    const currentValue = [{ address, netWorth: 2000.1234 }];
+    const expectedNewValue = [value];
 
     mockCacheManager.get.mockResolvedValueOnce(currentValue);
     mockCacheManager.set.mockResolvedValueOnce(expectedNewValue);
 
-    const result = await service.setCacheByKey(key, value);
+    await service.setLeaderboardCache(key, value);
 
-    expect(result).toEqual(expectedNewValue);
     expect(cacheManager.get).toHaveBeenCalledWith(key);
     expect(cacheManager.set).toHaveBeenCalledWith(
       key,

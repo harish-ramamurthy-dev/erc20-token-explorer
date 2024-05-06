@@ -68,7 +68,7 @@ describe('TokenService', () => {
       tokenMapperService.getErc20TokensWithNetWorth as jest.Mock
     ).mockReturnValue(tokensWithNetWorth);
 
-    (cacheService.setCacheByKey as jest.Mock).mockResolvedValue(undefined);
+    (cacheService.setLeaderboardCache as jest.Mock).mockResolvedValue(undefined);
 
     const result = await service.getErc20TokensWithNetWorth(address);
     expect(result).toEqual(tokensWithNetWorth);
@@ -83,9 +83,9 @@ describe('TokenService', () => {
       mockErc20Tokens,
       mockNetWorth,
     );
-    expect(cacheService.setCacheByKey).toHaveBeenCalledWith(
+    expect(cacheService.setLeaderboardCache).toHaveBeenCalledWith(
       CacheKey.ERC20_LEADERBOARD,
-      [{ address, netWorth: result.netWorth }],
+      { address, netWorth: result.netWorth },
     );
   });
 

@@ -27,12 +27,10 @@ export class TokenService {
           ecr20Tokens,
           netWorth,
         );
-      await this.cacheService.setCacheByKey(CacheKey.ERC20_LEADERBOARD, [
-        {
-          address,
-          netWorth: tokensWithNetWorth.netWorth,
-        },
-      ]);
+      await this.cacheService.setLeaderboardCache(CacheKey.ERC20_LEADERBOARD, {
+        address,
+        netWorth: tokensWithNetWorth.netWorth,
+      });
       return tokensWithNetWorth;
     } catch (error) {
       throw error;

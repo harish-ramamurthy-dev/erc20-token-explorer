@@ -11,7 +11,7 @@ export class TokenMapperService {
     const tokens = moralisErc20Response.map((token) => ({
       symbol: token.symbol,
       name: token.name,
-      balance: token.balanceFormatted,
+      balance: parseFloat(token.balanceFormatted).toFixed(2),
     }));
 
     return {
