@@ -2,10 +2,11 @@ import { useAccount, useSignMessage } from 'wagmi'
 import AppBar from './components/AppBar'
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
-import { Alert, Button, List, ListItem, ListItemText, Snackbar } from '@mui/material'
+import { Alert, Button, Snackbar } from '@mui/material'
 import { signUp } from './services/Auth.service'
 import { useEffect, useState } from 'react'
 import TokenExplorer from './pages/TokenExplorer'
+import AccountInfo from './components/AccountInfo'
 
 const App = (): JSX.Element => {
   const message = 'Signup'
@@ -15,16 +16,16 @@ const App = (): JSX.Element => {
   const { data: signMessageData, signMessage, error: signError, status } = useSignMessage()
 
   useEffect(() => {
-    ;(async () => {
-      if (signMessageData) {
+    if (signMessageData) {
+      ;(async () => {
         try {
           const recoveredAddress = await signUp(signMessageData)
           setAddress(recoveredAddress.data)
         } catch (error) {
           setIsAuthenticationError(true)
         }
-      }
-    })()
+      })()
+    }
   }, [signMessageData])
 
   return (
@@ -44,17 +45,7 @@ const App = (): JSX.Element => {
                   Connect your wallet to get started.
                 </Alert>
               )}
-              <List dense={true}>
-                <ListItem sx={{ p: 0, m: 0 }}>
-                  <ListItemText primary={`Status: ${account.status}`} />
-                </ListItem>
-                <ListItem sx={{ p: 0, m: 0 }}>
-                  <ListItemText primary={`Addresses: ${JSON.stringify(account.addresses) ?? ''}`} />
-                </ListItem>
-                <ListItem sx={{ p: 0, m: 0 }}>
-                  <ListItemText primary={`ChainId: ${account.chainId ?? ''}`} />
-                </ListItem>
-              </List>
+              <AccountInfo account={account} />
               {account.isConnected && (
                 <Button
                   color="primary"

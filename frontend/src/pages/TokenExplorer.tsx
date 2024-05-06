@@ -25,61 +25,165 @@ interface Props {
   address: string
 }
 
+interface TokensTabProps {
+  tokens: Erc20Token[] | null
+  isLoading: boolean
+  error: boolean
+  address: string
+  setError: (error: boolean) => void
+}
+
+interface LeaderboardTabProps {
+  leaderboard: Erc20LeaderBoard[] | null
+  isLoading: boolean
+  error: boolean
+  setError: (error: boolean) => void
+}
+
 enum TokenExplorerTabs {
   TOKENS = 'tokens',
   LEADERBOARD = 'leaderboard',
 }
 
-const TokenExplorer: FC<Props> = ({ address }) => {
+const TokensTab: FC<TokensTabProps> = ({ tokens, isLoading, error, address, setError }) => (
+  <TabPanel value={TokenExplorerTabs.TOKENS}>
+    {isLoading ? (
+      <Skeleton animation="wave" />
+    ) : (
+      <>
+        {error && (
+          <Snackbar
+            open={error}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            onClose={() => setError(false)}
+          >
+            <Alert severity="error" variant="filled" sx={{ width: '100%' }} onClose={() => setError(false)}>
+              {`Failed to load the tokens for the wallet address ${address}`}.
+            </Alert>
+          </Snackbar>
+        )}
+        {tokens?.length === 0 ? (
+          <Typography variant="body2" component="div">
+            No tokens available in the wallet.
+          </Typography>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell align="right">Symbol</TableCell>
+                  <TableCell align="right">Balance</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tokens?.map((token) => (
+                  <TableRow key={token.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableCell component="th" scope="row">
+                      {token.name}
+                    </TableCell>
+                    <TableCell align="right">{token.symbol}</TableCell>
+                    <TableCell align="right">{token.balance}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </>
+    )}
+  </TabPanel>
+)
+
+const LeaderboardTab: FC<LeaderboardTabProps> = ({ leaderboard, isLoading, error, setError }) => (
+  <TabPanel value={TokenExplorerTabs.LEADERBOARD}>
+    {isLoading ? (
+      <Skeleton animation="wave" />
+    ) : (
+      <>
+        {error && (
+          <Snackbar
+            open={error}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            onClose={() => setError(false)}
+          >
+            <Alert severity="error" variant="filled" sx={{ width: '100%' }} onClose={() => setError(false)}>
+              Failed to load the wallets connected to the dapp.
+            </Alert>
+          </Snackbar>
+        )}
+        {leaderboard?.length === 0 ? (
+          <Typography variant="body2" component="div">
+            No wallets connected to the app.
+          </Typography>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Address</TableCell>
+                  <TableCell align="right">Balance</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {leaderboard?.map((board) => (
+                  <TableRow key={board.address} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableCell component="th" scope="row">
+                      {board.address}
+                    </TableCell>
+                    <TableCell align="right">{board.netWorth}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </>
+    )}
+  </TabPanel>
+)
+
+const TokenExplorer: FC<Props> = ({ address }): JSX.Element => {
   const [tab, setTab] = useState<TokenExplorerTabs>(TokenExplorerTabs.TOKENS)
-  const [isLoadingTokens, setIsLoadingTokens] = useState<boolean>(false)
-  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState<boolean>(false)
   const [tokens, setTokens] = useState<Erc20Token[] | null>(null)
   const [leaderboard, setLeaderBoard] = useState<Erc20LeaderBoard[] | null>(null)
-  const [isLoadingTokensError, setIsLoadingTokensError] = useState<boolean>(false)
-  const [isLoadingLeaderboardError, setIsLoadingLeaderboardError] = useState<boolean>(false)
+  const [isLoadingTokens, setIsLoadingTokens] = useState<boolean>(false)
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState<boolean>(false)
+  const [errorTokens, setErrorTokens] = useState<boolean>(false)
+  const [errorLeaderboard, setErrorLeaderboard] = useState<boolean>(false)
 
   useEffect(() => {
-    const tokenAbortController = new AbortController()
-    const tokenSignal = tokenAbortController.signal
-
-    const leaderboardAbortController = new AbortController()
-    const leaderboardSignal = leaderboardAbortController.signal
-
-    const getTokens = async () => {
+    const fetchTokens = async () => {
       try {
         setIsLoadingTokens(true)
-        const fetchedTokens = await getErc20Tokens(address, tokenSignal)
+        const fetchedTokens = await getErc20Tokens(address)
         setTokens(fetchedTokens.data.tokens)
       } catch (error) {
         if ((error as any).name !== 'AbortError' && (error as any).name !== 'CanceledError') {
-          setIsLoadingTokensError(true)
+          setErrorTokens(true)
         }
       } finally {
         setIsLoadingTokens(false)
       }
     }
-    const getLeaderboard = async () => {
+
+    const fetchLeaderboard = async () => {
       try {
         setIsLoadingLeaderboard(true)
-        const leadernboard = await getTokenLeaderboard(leaderboardSignal)
-        setLeaderBoard(leadernboard.data.sort((a, b) => b.netWorth - a.netWorth))
+        const leaderboardData = await getTokenLeaderboard()
+        setLeaderBoard(leaderboardData.data.sort((a, b) => b.netWorth - a.netWorth))
       } catch (error) {
         if ((error as any).name !== 'AbortError' && (error as any).name !== 'CanceledError') {
-          setIsLoadingLeaderboardError(true)
+          setErrorLeaderboard(true)
         }
       } finally {
         setIsLoadingLeaderboard(false)
       }
     }
-    getTokens()
-    getLeaderboard()
 
-    return () => {
-      tokenAbortController.abort()
-      leaderboardAbortController.abort()
-    }
-  }, [])
+    fetchTokens()
+    fetchLeaderboard()
+  }, [address])
 
   return (
     <TabContext value={tab}>
@@ -89,104 +193,19 @@ const TokenExplorer: FC<Props> = ({ address }) => {
           <Tab label="Leaderboard" value={TokenExplorerTabs.LEADERBOARD} />
         </TabList>
       </Box>
-      {isLoadingTokens ? (
-        <Skeleton animation="wave" />
-      ) : (
-        <TabPanel value={TokenExplorerTabs.TOKENS}>
-          {tokens?.length === 0 ? (
-            <Typography variant="body2" component="div">
-              No tokens available in the wallet.
-            </Typography>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell align="right">Symbol</TableCell>
-                    <TableCell align="right">Balance</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {tokens?.map((token) => (
-                    <TableRow key={token.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell component="th" scope="row">
-                        {token.name}
-                      </TableCell>
-                      <TableCell align="right">{token.symbol}</TableCell>
-                      <TableCell align="right">{token.balance}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-          {isLoadingTokensError && (
-            <Snackbar
-              open={isLoadingTokensError}
-              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-              onClose={() => setIsLoadingTokensError(false)}
-            >
-              <Alert
-                severity="error"
-                variant="filled"
-                sx={{ width: '100%' }}
-                onClose={() => setIsLoadingTokensError(false)}
-              >
-                {`Failed to load the tokens for the wallet address ${address}`}.
-              </Alert>
-            </Snackbar>
-          )}
-        </TabPanel>
-      )}
-      {isLoadingLeaderboard ? (
-        <Skeleton animation="wave" />
-      ) : (
-        <TabPanel value={TokenExplorerTabs.LEADERBOARD}>
-          {leaderboard?.length === 0 ? (
-            <Typography variant="body2" component="div">
-              No wallets connected to the app.
-            </Typography>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Address</TableCell>
-                    <TableCell align="right">Balance</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leaderboard?.map((board) => (
-                    <TableRow key={board.address} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell component="th" scope="row">
-                        {board.address}
-                      </TableCell>
-                      <TableCell align="right">{board.netWorth}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-          {isLoadingLeaderboardError && (
-            <Snackbar
-              open={isLoadingLeaderboardError}
-              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-              onClose={() => setIsLoadingLeaderboardError(false)}
-            >
-              <Alert
-                severity="error"
-                variant="filled"
-                sx={{ width: '100%' }}
-                onClose={() => setIsLoadingLeaderboardError(false)}
-              >
-                {`Failed to load the wallets connected to the dapp.`}.
-              </Alert>
-            </Snackbar>
-          )}
-        </TabPanel>
-      )}
+      <TokensTab
+        tokens={tokens}
+        isLoading={isLoadingTokens}
+        error={errorTokens}
+        address={address}
+        setError={setErrorTokens}
+      />
+      <LeaderboardTab
+        leaderboard={leaderboard}
+        isLoading={isLoadingLeaderboard}
+        error={errorLeaderboard}
+        setError={setErrorLeaderboard}
+      />
     </TabContext>
   )
 }
