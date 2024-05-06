@@ -45,7 +45,7 @@ enum TokenExplorerTabs {
   LEADERBOARD = 'leaderboard',
 }
 
-const TokensTab: FC<TokensTabProps> = ({ tokens, isLoading, error, address, setError }) => (
+const TokensTab: FC<TokensTabProps> = ({ tokens, isLoading, error, address, setError }): JSX.Element => (
   <TabPanel value={TokenExplorerTabs.TOKENS}>
     {isLoading ? (
       <Skeleton animation="wave" />
@@ -95,7 +95,7 @@ const TokensTab: FC<TokensTabProps> = ({ tokens, isLoading, error, address, setE
   </TabPanel>
 )
 
-const LeaderboardTab: FC<LeaderboardTabProps> = ({ leaderboard, isLoading, error, setError }) => (
+const LeaderboardTab: FC<LeaderboardTabProps> = ({ leaderboard, isLoading, error, setError }): JSX.Element => (
   <TabPanel value={TokenExplorerTabs.LEADERBOARD}>
     {isLoading ? (
       <Skeleton animation="wave" />

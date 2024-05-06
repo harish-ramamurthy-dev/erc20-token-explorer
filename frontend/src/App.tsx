@@ -1,4 +1,4 @@
-import { useAccount, useSignMessage } from 'wagmi'
+import { useAccount, useAccountEffect, useSignMessage } from 'wagmi'
 import AppBar from './components/AppBar'
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
@@ -14,6 +14,11 @@ const App = (): JSX.Element => {
   const [address, setAddress] = useState<string>('')
   const [isAuthenticationError, setIsAuthenticationError] = useState<boolean>(false)
   const { data: signMessageData, signMessage, error: signError, status } = useSignMessage()
+  useAccountEffect({
+    onDisconnect() {
+      setAddress('')
+    },
+  })
 
   useEffect(() => {
     if (signMessageData) {
